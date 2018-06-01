@@ -1,24 +1,13 @@
 // When the app starts
 var express = require('express');
 var app = express();
+
 var bodyParser = require('body-parser');
 var Promise = require('bluebird');
 
-var dbConfig = {
-  client: 'mysql',
-  connection: {
-    host: 'localhost',
-    user: 'arias',
-    password: 'saira',
-    database: 'employees',
-    charset: 'utf8'
-  }
-};
+var router = require('./router.js'); 
 
-var knex = require('knex')(dbConfig);
-var bookshelf = require('bookshelf')(knex);
-
-app.set('bookshelf', bookshelf);
+app.set('bookshelf', router.GetBookshelf());
 
 var allowCrossDomain = function(req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
@@ -27,7 +16,7 @@ var allowCrossDomain = function(req, res, next) {
 
 app.use(allowCrossDomain);
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // parse application/json
 app.use(bodyParser.json());
@@ -38,7 +27,20 @@ app.use(bodyParser.json({type: 'application/vnd.api+json'}));
 // elsewhere, to use the bookshelf client:
 var bookshelf = app.get('bookshelf');
 
-// {our model definition code goes here}
+
+app.all('*', function AllRequestsHandler(request, response, next){
+	console.log('Request ' + request.method + '\tof: ' + request.url + '\treceived from: ' + 
+		request.connection.remoteAddress + '\t' + new Date());
+
+	next();
+});
+app.use('/api', express.static('public'));
+app.use('/api', router);
+
+
+
+
+
 
 app.listen(3000, function() {
   console.log('Express started at port 3000');
